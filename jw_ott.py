@@ -11,14 +11,14 @@ results = []
 for num in range(1, 51):
 
     result_by_multiple = just_watch.search_for_item(
-        providers=['ply'],
+        providers=['nfx'],
         content_types=['movie'],
         page = num,
     )
     
     results.append(result_by_multiple)
 
-sys.stdout = open('my_coupang.txt', 'w', encoding="UTF-8")    
+sys.stdout = open('my_netflix.txt', 'w', encoding="UTF-8")    
 
 pprint.pprint(results)
 
