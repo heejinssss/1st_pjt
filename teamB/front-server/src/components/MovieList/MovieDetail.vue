@@ -1,46 +1,49 @@
 <template>
   <div>
-
     <div class="backdropcontainer"
-    :style="{ backgroundImage: `linear-gradient( rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.9) ), url(https://image.tmdb.org/t/p/original${movie.backdrop_path})`}">
+    :style="{ backgroundImage: `linear-gradient( rgba(255, 255, 255, 0.3), rgba(0, 0, 0, 1) ), url(https://image.tmdb.org/t/p/original${movie.backdrop_path})`}">
 
 
-      <div v-if="movie" class="inner">
+      <div v-if="movie">
         <p class="title">{{ movie.title }}</p>
 
-        <div v-if="ott_lst" class="ott-btn" style="margin-bottom:20px;">
-          <span v-for="(ott, idx) in ott_lst" :key="idx" style="margin:5px;">
-            <img :src="require(`@/assets/${ott}.png`)" style="width:70px; height:70px;">
+
+        <div class="card" style="width:700px; margin:auto;">
+          <div v-if="movie.video_key" class="card-img-top">
+            <iframe id="player" width="700px" height="360px"
+            :src="`https://www.youtube.com/embed/${movie.video_key}`"
+            frameborder="0">
+            </iframe>
+          </div>
+
+          <div class="card-img-top" v-else>
+            <img :src="'https://image.tmdb.org/t/p/original'+ movie.backdrop_path" style="width:640px; height:auto;">
+          </div>
+
+          <div class="card-body">
+            <div class="card-text">{{ movie.overview }}</div>
+          </div>
+        </div>
+
+        <div v-if="ott_lst" class="ott" style="margin-bottom: 20px; color: white;">
+          <span style="margin:px; font-size: 15px;"><strong>{{ movie.title }}, </strong></span>
+          <span v-for="(ott, idx) in ott_lst" :key="idx" style="margin:5px; font-size: 20px;">
+            <img :src="require(`@/assets/${ott}_long.png`)" style="height:20px;">
           </span>
+          <span style="margin:px; font-size: 15px;">에서 즐기실 수 있습니다</span>
         </div>
 
+        <span>
+          <button type="button" class="like btn btnEvent" @click="userLikes(movie.id)">
+            <img v-if="likes" :src="require('@/assets/heart_after.png')" style="width: 35px; height: 35px;">
+            <img v-else :src="require('@/assets/heart_before.png')" style="width: 35px; height: 35px;">
+          </button>
+          <span style="color: white;">{{ movie.likes_count }}</span>
+        </span>
 
-        <div class="card">
-        <div v-if="movie.video_key" class="card-img-top">
-          <iframe id="player" width="640" height="360"
-          :src="`https://www.youtube.com/embed/${movie.video_key}`"
-          frameborder="0">
-          </iframe>
-        </div>
-
-        <div class="card-img-top" v-else>
-          <img :src="'https://image.tmdb.org/t/p/original'+ movie.backdrop_path" style="width:640px; height:auto;">
-        </div>
-
-        <div class="card-body">
-          <p class="card-text">{{ movie.overview }}</p>
-        </div>
-        </div>
-
-
-        <button @click="userLikes(movie.id)">{{ likes ? '좋아요' : '좋아요  취소' }}</button>
-        <p>{{ movie.likes_count }}</p>
-        <MovieCommentCreate :movie="movie" v-if="movie"/>
+        <MovieCommentCreate :movie="movie" v-if="movie" />
       </div>
     </div>
-
-
-
   </div>
 </template>
 
@@ -59,21 +62,23 @@ export default {
   data() {
     return {
       movie: null,
-      likes: null,
       ott_lst: [],
+      likes: false,
+      // is_liked: false
     }
   },
   computed: {
     movieProp() {
       return this.$route.params.movie || this.movie
     },
+    // likes() {
+    //   return this.$store.state.likes
+    // }
   },
-  created() {
-    this.likes = JSON.parse(localStorage.getItem('likes')) || false
-    },
   mounted() {
     this.getDetails()
     this.getOfferOtt()
+    this.getLikes()
   },
   methods: {
     getOfferOtt() {
@@ -99,7 +104,7 @@ export default {
       const movieId = this.$route.params.id
       axios({
         method: 'get',
-        url: `${API_URL}/movies/detail/${movieId}`,
+        url: `${API_URL}/movies/detail/${movieId}/`,
         headers: {
           Authorization: `Token ${this.$store.state.token}`
         }
@@ -113,37 +118,44 @@ export default {
         console.log(err)
       })
     },
-    getLikes(movieId) {
+    getLikes() {
+      console.log("좋아요 정보 가져오기")
+      const movieId = this.$route.params.id
+      console.log(movieId)
       axios({
         method: 'get',
-        url: `${API_URL}/movies/${movieId}/likes/`,
+        url: `${API_URL}/movies/likes/${movieId}/`,
         headers: {
           Authorization: `Token ${this.$store.state.token}`
         }
+      })
         .then((res) => {
           console.log(res)
+          this.likes = res.data.likes
           this.movie.likes_count = res.data.likes_count
+          console.log("좋아요 요청 들어옴")
+          console.log(this.movie.likes)
+          console.log(this.movie.likes_count)
         })
         .catch((err) => {
           console.log(err)
         })
-      })
     },
-    // 좋아요 누르기
+    // 좋아요 버튼 누르기
     userLikes(movieId) {
       this.likes = !this.likes
-      localStorage.setItem('likes', JSON.stringify(this.likes))
+      // localStorage.setItem('likes', JSON.stringify(this.likes))
 
       axios({
         method: 'post',
-        url: `${API_URL}/movies/${movieId}/likes/`,
+        url: `${API_URL}/movies/likes/${movieId}/`,
         headers: {
           Authorization: `Token ${this.$store.state.token}`
         }
       })
       .then((res) => {
         console.log(res)
-        this.movie.likes_count = res.data.likes_count
+        this.movie.likes_count = res.data.likes_count // 좋아요 누른 후 count 바로 변경
       })
       .catch((err) => {
         console.log(err)
@@ -154,28 +166,68 @@ export default {
 </script>
 
 <style scoped>
+.backdropcontainer {
+  background-repeat: no-repeat;
+  background-position: center top;
+}
 @font-face {
   font-family: 'MBC1961M';
   src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-01@1.0/MBC1961M.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
 }
-.backdropcontainer {
-  background-repeat: no-repeat;
-  background-position: center top;
+@font-face {
+  font-family: 'LINESeedKR-Bd';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_11-01@1.0/LINESeedKR-Bd.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
 }
 p.title {
-  padding-top: 20px;
+  padding-top: 40px;
+  padding-bottom: 20px;
   font-family: MBC1961M;
   font-size: 50px;
   text-shadow: 10px;
-}
-.ott-btn img {
-  border-radius: 10px;
+  color: rgb(36, 36, 36);
 }
 .card {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: transparent;
+}
+@font-face {
+  font-family: 'Arita-buri-SemiBold';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/Arita-buri-SemiBold.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+/* @font-face {
+  font-family: 'ChosunCentennial';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2206-02@1.0/ChosunCentennial.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+} */
+/* @font-face {
+  font-family: 'Dokrip';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.1/Dokrip.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+} */
+.card {
+  border: transparent;
+}
+.card-text {
+  color: white;
+  font-size: 20px;
+  font-family: Arita-buri-SemiBold;
+}
+.like:focus{ 	
+  border: none;
+  outline: none;
+}
+.like:hover {
+  transition: 0.2s ease-out;
+  opacity : 0.8;
+}
+.like:not(:hover) {
+  transition: 0.2s ease-out;
 }
 </style>

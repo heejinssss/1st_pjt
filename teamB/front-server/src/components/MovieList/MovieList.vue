@@ -1,16 +1,17 @@
 <template>
   <div class="container" ref="container">
 
-    <button type="button" variant="primary" class="m-2 btn btnEvent" v-for="(ott, idx) in otts" :key="idx" @click="buttonClick(ott.initial)">
-      <img :src="require(`@/assets/${ott.initial}.png`)" style="width:50px; height:50px" alt="btnImages" class="btnImages">
-    </button>
+      <button type="button" class="p-3 btn btnEvent" v-for="(ott, idx) in otts" :key="idx"
+      @click="buttonClick(ott.initial)">
+        <img :src="require(`@/assets/${ott.initial}.png`)" style="width:70px; height:70px">
+      </button>
 
-    <SearchMovie />
+      <SearchMovie />
 
     <!--영화 정보-->
-    <div v-for="(movie, idx) in movies" :key="'m'+idx">
-      <MovieListItem :movie="movie"/>
-    </div>
+    <span v-for="(movie, idx) in movies" :key="'m'+idx">
+      <MovieListItem :movie="movie" />
+    </span>
 
     <infinite-loading @infinite="infiniteHandler"></infinite-loading>
   
@@ -18,7 +19,6 @@
 </template>
 
 <script>
-// import OttListButton from '@/components/MovieList/OttListButton'
 import MovieListItem from '@/components/MovieList/MovieListItem'
 import SearchMovie from '@/components/MovieList/SearchMovie'
 import InfiniteLoading from 'vue-infinite-loading'
@@ -31,7 +31,6 @@ export default {
   components: {
     SearchMovie,
     MovieListItem,
-    // OttListButton,
     InfiniteLoading,
   },
   getters: {
@@ -52,16 +51,10 @@ export default {
   },
   data() {
     return {
-      // movies: [],
       totalPages: 0,
       currentPage: 1,
     }
   },
-  // watch: {
-  //   movies() {
-  //     return this.$store.state.movies
-  //   }
-  // },
   mounted() {
     this.$store.dispatch('getOtts')
     this.$refs.container.addEventListener('scroll', this.checkScroll)
@@ -93,7 +86,6 @@ export default {
         })
     },
     buttonClick(input) {
-      // const ott_initial = input
       this.$store.dispatch('buttonClick', input)
       this.totalPages = Math.ceil(this.movies.length / 10)
       this.currentPage = 1
@@ -119,18 +111,12 @@ export default {
 }
 </script>
 
-<style>
-.container {
-  max-height: 700px;
-  overflow-y: scroll;
+<style scoped>
+.btn {
+  border: none;
 }
-.container::-webkit-scrollbar {
-  width: 0.5em; /* 스크롤바 너비 */
-}
-.container::-webkit-scrollbar-track {
-  background-color: red; /* 스크롤바 트랙 배경색 */
-}
-.container::-webkit-scrollbar-thumb {
-  background-color: #ffffff; /* 스크롤바 색상 */
+.btn:focus {
+	border: none;
+	outline: none;
 }
 </style>
